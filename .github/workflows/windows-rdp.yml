@@ -2,6 +2,9 @@ name: Windows Cloud RDP
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/windows-rdp.yml'
 
 jobs:
   build:
@@ -26,31 +29,28 @@ jobs:
         env:
           TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
         run: |
-          # Download and install Tailscale silently
           Invoke-WebRequest "https://pkgs.tailscale.com/stable/tailscale-setup-latest-amd64.msi" -OutFile "C:\tailscale.msi"
           Start-Process msiexec -ArgumentList "/i C:\tailscale.msi /quiet /norestart" -Wait
           
-          # Connect to Tailscale network
           Start-Sleep -Seconds 5
           & "C:\Program Files\Tailscale\tailscale.exe" up --authkey="$Env:TAILSCALE_AUTHKEY" --hostname="github-rdp-server"
           
           Start-Sleep -Seconds 8
           
-          # Get Tailscale IP
           $ts_ip = & "C:\Program Files\Tailscale\tailscale.exe" ip -4
           
           Write-Host ""
           Write-Host "==================================================" -ForegroundColor Green
           Write-Host "  >>> RDP SERVER IS READY! <<<" -ForegroundColor Cyan
           Write-Host "  Tailscale IP : $ts_ip" -ForegroundColor Yellow
-          Write-Host "  Username     : NvdAdmin" -ForegroundColor Yellow
+          Write-Host "  Username     : NvDAdmin" -ForegroundColor Yellow
           Write-Host "  Password     : P@ssw0rd1qazXSW@#" -ForegroundColor Yellow
           Write-Host "  >> Open mstsc and connect to: $ts_ip" -ForegroundColor Magenta
           Write-Host "==================================================" -ForegroundColor Green
 
-      - name: 4. Keep Server Alive (48 Hours)
+      - name: 4. Keep Server Alive (Max 6 Hours)
         run: |
-          for ($i = 1; $i -le 2880; $i++) {
+          for ($i = 1; $i -le 350; $i++) {
             Start-Sleep -Seconds 60
-            Write-Host "[$i/2880] Server running..."
+            Write-Host "[$i/350] Server running..."
           }
